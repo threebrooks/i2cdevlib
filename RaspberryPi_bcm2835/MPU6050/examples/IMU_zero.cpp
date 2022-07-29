@@ -79,6 +79,7 @@ and so on.
 #include "MPU6050.h"
 #include <math.h>
 #include <iostream>
+#include <cnpy.h>
 
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -350,6 +351,13 @@ int main(int argc, char **argv)
 	SetAveraging(NFast);
 	PullBracketsOut();
 	PullBracketsIn();
+
+        std::vector<int> outOffsets; 
+       	for (int i = iAx; i <= iGz; i++)
+	{ 
+                outOffsets.push_back(HighOffset[i]+(HighOffset[i]-LowOffset[i])/2);
+	} 
+        cnpy::npy_save("mpu6050.cal", &outOffsets, {outOffsets.size()}, "w");
 
 	printf("-------------- done --------------\n\n");
 	return 0;
