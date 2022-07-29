@@ -71,12 +71,14 @@ and so on.
 */
 
 
+#include <unistd.h>
 #include <stdio.h>
 #include <cstdio>
 #include <bcm2835.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
 #include <math.h>
+#include <iostream>
 
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -331,7 +333,12 @@ void PullBracketsOut()
 
 
 int main(int argc, char **argv)
-{ 
+{
+        if (getuid() != 0) {
+          std::cerr << "Needs to be run as root!" << std::endl << std::flush;
+          exit(-1);
+        } 
+        std::cout << "Put the MPU6050 on a flat and horizontal surface, and leave it operating for 5-10 minutes so its temperature gets stabilized." << std::endl;
 	Initialize();
 	for (int i = iAx; i <= iGz; i++)
 	{ // set targets and initial guesses
