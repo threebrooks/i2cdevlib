@@ -137,7 +137,7 @@ void GetSmoothed()
 	for (i = 1; i <= N; i++)
 	{ 
 		// get sums
-		accelgyro.getMotion6(&RawValue[iAx], &RawValue[iAy], &RawValue[iAz], 
+		bool success = accelgyro.getMotion6(&RawValue[iAx], &RawValue[iAy], &RawValue[iAz], 
 							&RawValue[iGx], &RawValue[iGy], &RawValue[iGz]);
 		if ((i % 500) == 0)
 		{
@@ -355,9 +355,11 @@ int main(int argc, char **argv)
         std::vector<int> outOffsets; 
        	for (int i = iAx; i <= iGz; i++)
 	{ 
-                outOffsets.push_back(HighOffset[i]+(HighOffset[i]-LowOffset[i])/2);
+                int offset = HighOffset[i]+(HighOffset[i]-LowOffset[i])/2; 
+                std::cout << i << ": " << offset << std::endl;
+                outOffsets.push_back(offset);
 	} 
-        cnpy::npy_save("mpu6050.cal", &outOffsets, {outOffsets.size()}, "w");
+        cnpy::npy_save<int>("mpu6050.cal", &outOffsets[0], {outOffsets.size()}, "w");
 
 	printf("-------------- done --------------\n\n");
 	return 0;

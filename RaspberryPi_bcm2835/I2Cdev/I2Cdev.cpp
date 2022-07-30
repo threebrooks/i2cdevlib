@@ -117,7 +117,7 @@ int8_t I2Cdev::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
  * @param data Buffer to store read data in
  * @return I2C_TransferReturn_TypeDef http://downloads.energymicro.com/documentation/doxygen/group__I2C.html
  */
-int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {
+uint8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {
   bcm2835_i2c_setSlaveAddress(devAddr);
   sendBuf[0] = regAddr;
   uint8_t response = bcm2835_i2c_write_read_rs(sendBuf, 1, recvBuf, length);
@@ -125,7 +125,7 @@ int8_t I2Cdev::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8
   for (i = 0; i < length ; i++) {
     data[i] = (uint8_t) recvBuf[i];
   }
-  return response == BCM2835_I2C_REASON_OK;
+  return response;
 }
 
 /** write a single bit in an 8-bit device register.
