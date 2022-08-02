@@ -69,6 +69,13 @@ int8_t I2Cdev::readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t
   return response == BCM2835_I2C_REASON_OK ;
 }
 
+int8_t I2Cdev::readBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t *data) {
+    uint16_t b;
+    uint8_t count = readWord(devAddr, regAddr, &b);
+    *data = b & (1 << bitNum);
+    return count;
+}
+
 /** Read multiple bits from an 8-bit device register.
  * @param devAddr I2C slave device address
  * @param regAddr Register regAddr to read from
@@ -94,6 +101,23 @@ int8_t I2Cdev::readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint
     *data = b;
   }
   return response == BCM2835_I2C_REASON_OK;
+}
+
+int8_t I2Cdev::readBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t *data) {
+    // 1101011001101001 read byte
+    // fedcba9876543210 bit numbers
+    //    xxx           args: bitStart=12, length=3
+    //    010           masked
+    //           -> 010 shifted
+    uint8_t count;
+    uint16_t w;
+    if ((count = readWord(devAddr, regAddr, &w)) != 0) {
+        uint16_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        w &= mask;
+        w >>= (bitStart - length + 1);
+        *data = w;
+    }
+    return count;
 }
 
 /** Read single byte from an 8-bit device register.
@@ -149,6 +173,13 @@ bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t 
   return response == BCM2835_I2C_REASON_OK;
 }
 
+bool I2Cdev::writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data) {
+    uint16_t w;
+    readWord(devAddr, regAddr, &w);
+    w = (data != 0) ? (w | (1 << bitNum)) : (w & ~(1 << bitNum));
+    return writeWord(devAddr, regAddr, w);
+}
+
 /** Write multiple bits in an 8-bit device register.
  * @param devAddr I2C slave device address
  * @param regAddr Register regAddr to write to
@@ -181,6 +212,28 @@ bool I2Cdev::writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8
     }
   return response == BCM2835_I2C_REASON_OK;
 }
+
+bool I2Cdev::writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data) {
+    //              010 value to write
+    // fedcba9876543210 bit numbers
+    //    xxx           args: bitStart=12, length=3
+    // 0001110000000000 mask word
+    // 1010111110010110 original value (sample)
+    // 1010001110010110 original & ~mask
+    // 1010101110010110 masked | value
+    uint16_t w;
+    if (readWord(devAddr, regAddr, &w) != 0) {
+        uint16_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        data <<= (bitStart - length + 1); // shift data into correct position
+        data &= mask; // zero all non-important bits in data
+        w &= ~(mask); // zero all important bits in existing word
+        w |= data; // combine data with existing word
+        return writeWord(devAddr, regAddr, w);
+    } else {
+        return false;
+    }
+}
+
 
 /** Write single byte to an 8-bit device register.
  * @param devAddr I2C slave device address
