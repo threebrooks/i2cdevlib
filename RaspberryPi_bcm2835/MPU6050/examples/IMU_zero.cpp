@@ -359,7 +359,7 @@ int main(int argc, char **argv)
                 std::cout << i << ": " << offset << std::endl;
                 outOffsets.push_back(offset);
 	} 
-        cnpy::npy_save<int>("mpu6050.cal", &outOffsets[0], {outOffsets.size()}, "w");
+        cnpy::npy_save<int>("data/mpu6050_IMU_zero.npy", &outOffsets[0], {outOffsets.size()}, "w");
 
 	printf("-------------- done --------------\n\n");
 	return 0;
